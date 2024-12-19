@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON to CSV Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #005151;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 500px;
+        }
+
+        #fileInput {
+            margin-top: 20px;
+        }
+
+        input::file-selector-button {
+            align-items: center;
+            background-color: #0A66C2;
+            border: 0;
+            border-radius: 100px;
+            box-sizing: border-box;
+            color: #ffffff;
+            cursor: pointer;
+            display: inline-flex;
+            font-family: -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", "Fira Sans", Ubuntu, Oxygen, "Oxygen Sans", Cantarell, "Droid Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Lucida Grande", Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            justify-content: center;
+            line-height: 20px;
+            max-width: 480px;
+            min-height: 40px;
+            min-width: 0px;
+            overflow: hidden;
+            padding: 0px;
+            padding-left: 20px;
+            padding-right: 20px;
+            text-align: center;
+            touch-action: manipulation;
+            transition: background-color 0.167s cubic-bezier(0.4, 0, 0.2, 1) 0s, box-shadow 0.167s cubic-bezier(0.4, 0, 0.2, 1) 0s, color 0.167s cubic-bezier(0.4, 0, 0.2, 1) 0s;
+            user-select: none;
+            -webkit-user-select: none;
+            vertical-align: middle;
+        }
+
+        input::file-selector-button:hover,
+        input::file-selector-button:focus {
+            background-color: #16437E;
+            color: #ffffff;
+        }
+
+        input::file-selector-button:disabled {
+            cursor: not-allowed;
+            background: rgba(0, 0, 0, .08);
+            color: rgba(0, 0, 0, .3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Labor Category Entries API response.json to CSV Converter</h1>
+        <p>Upload a <code>response.json</code> file exported from Postman to extract "Name" and "Description" into a CSV.</p>
+        <input type="file" id="fileInput" accept=".json">
+    </div>
+    
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const jsonData = JSON.parse(e.target.result);
+                        if (jsonData.records) {
+                            const rows = [["Name", "Description"]];
+                            jsonData.records.forEach(record => {
+                                rows.push([record.name || "", record.description || ""]);
+                            });
+
+                            const csvContent = rows.map(row => row.map(cell => `"${cell}"`).join(",")).join("\n");
+                            const blob = new Blob([csvContent], { type: "text/csv" });
+                            const url = URL.createObjectURL(blob);
+
+                            // Get current date and time for the file name
+                            const now = new Date();
+                            const year = now.getFullYear();
+                            const month = String(now.getMonth() + 1).padStart(2, '0');
+                            const day = String(now.getDate()).padStart(2, '0');
+                            const hours = now.getHours();
+                            const minutes = now.getMinutes();
+
+                            const timestamp = `${year}${month}${day}T${hours}${minutes}`;
+                            const fileName = `LaborCategoryEntryExport_${timestamp}.csv`;
+
+                            const link = document.createElement("a");
+                            link.href = url;
+                            link.download = fileName;
+                            link.click();
+
+                            URL.revokeObjectURL(url);
+
+                            // Clear the file input to allow a new upload
+                            document.getElementById('fileInput').value = '';
+                            alert("File processed and ready for a new upload.");
+                        } else {
+                            alert("Invalid data format. Make sure the JSON contains a 'records' array.");
+                        }
+                    } catch (error) {
+                        alert("Invalid JSON file.");
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+    </script>
+</body>
+</html>
